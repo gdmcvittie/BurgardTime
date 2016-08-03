@@ -1,5 +1,5 @@
 const uint16_t gameOver[] PROGMEM = {
-  500,100, 300,100, 100,100, 300,100, 500,100, 50,160,
+  900,100, 800,100, 900,100, 600,100, 500,100, 300,100, 100,100, 300,100, 500,100, 50,160,
   TONES_END };
 
 const uint16_t levelDone[] PROGMEM = {
@@ -17,19 +17,6 @@ void soundMisc(){
   sound.tone(500, 100);
 }
 
- /*
- * jump
- */
-void soundJump(){
-  sound.tone(1000, 100);
-}
-
- /*
- * throw hammer
- */
-void soundThrow(){
-  sound.tone(800, 100);
-}
 
 /*
  * hit something with hammer
@@ -70,20 +57,9 @@ void soundLevelDone(){
 
 
 /*
- * boss killed
- */
-void soundBossDone(){
-  sound.tones(bossDone);
-  while (sound.playing()) { }
-}
-
-
-/*
  * game over
  */
 void soundGameOver(){
-  sound.tones(gameOver);
-  while (sound.playing()) { }
   sound.tones(gameOver);
   while (sound.playing()) { }
   delay(1000);
