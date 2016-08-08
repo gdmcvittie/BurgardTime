@@ -7,12 +7,10 @@
  */
 #include <Arduboy2.h>
 #include <ArduboyTones.h>
-#include "sprites.h"
 #include "bitmaps.h"
 
 Arduboy2 arduboy;
 ArduboyTones sound(arduboy.audio.enabled);
-Sprites sprites(arduboy.getBuffer());
 
 /*
  * game variables
@@ -41,7 +39,7 @@ int SCORE = 0;
  * positioning
  */
 //player position
-int player_x = 8;
+int player_x = 4;
 int player_y = 44;
 
 //platform position
@@ -74,6 +72,10 @@ int level1ladders [] = { 11,15,  11,39,  57,15,  57,39,  102,15, 102,39 };
 int level2ladders [] = { 0,15,  27,39,  86,15,  112,39 };
 int level3ladders [] = { 30,39,  57,15,  84,39 };
 int level4ladders [] = { 34,39,  86,15 };
+int level5ladders [] = { 112,39,  112,15 };
+int level6ladders [] = { 0,39,  112,15 };
+int level7ladders [] = { 44,39,  16,15 };
+int level8ladders [] = { 112,39,  0,15 };
 
 //burger position
 //x,y (w is always 24, h is always 6)
@@ -96,9 +98,29 @@ int level3burgers [] = {
   2,58,     102,58
 };
 int level4burgers [] = { 
-  4,9,     55,9,     104,9,
-  4,33,     55,33,     104,33,
-  4,58,     55,58,     104,58
+  4,9,     104,9,
+  4,33,     104,33,
+  4,58,     104,58
+};
+int level5burgers [] = { 
+  2,9,
+  2,33,
+  2,58,
+};
+int level6burgers [] = { 
+  48,9,
+  48,33,
+  48,58,
+};
+int level7burgers [] = { 
+  100,9,
+  100,33,
+  100,58,
+};
+int level8burgers [] = { 
+  48,9,
+  48,33,
+  48,58,
 };
 int topbun1_x = 0;
 int topbun1_y = 0;
@@ -108,7 +130,10 @@ int meat1_x = 0;
 int meat1_y = 0;
 int meat2_x = 0;
 int meat2_y = 0;
-
+int btmbun1_x = 0;
+int btmbun1_y = 0;
+int btmbun2_x = 0;
+int btmbun2_y = 0;
 
 
 /*
@@ -133,6 +158,9 @@ bool GOT_SALT = false;
 bool EGG_HIT = false;
 bool HOTDOG_HIT = false;
 bool PICKLE_HIT = false;
+
+//2 burgers or 1
+bool TWOBURGERS = false;
 
 //burger status
 //0 = new, 1 = top falling to platform2, 2 = meat falling to platform3, 3 = top falling to platform3, 4 = complete, 5 = waiting
@@ -197,18 +225,64 @@ void buildLevel(){
 
     //game play
     case 1:
+      arduboy.drawBitmap(0,0,level_bg, 128, 64, WHITE);
+    
       switch(CURRENT_LEVEL){
         case 1:
-          arduboy.drawBitmap(0,0,level1, 128, 64, WHITE);
+          for(int i = 0; i < 12; i=i+2){
+            int16_t lx = level1ladders[i];
+            int16_t ly = level1ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
         break;
         case 2:
-          arduboy.drawBitmap(0,0,level2, 128, 64, WHITE);
+          for(int i = 0; i < 8; i=i+2){
+            int16_t lx = level2ladders[i];
+            int16_t ly = level2ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
         break;
         case 3:
-          arduboy.drawBitmap(0,0,level3, 128, 64, WHITE);
+          for(int i = 0; i < 6; i=i+2){
+            int16_t lx = level3ladders[i];
+            int16_t ly = level3ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
         break;
         case 4:
-          arduboy.drawBitmap(0,0,level4, 128, 64, WHITE);
+          for(int i = 0; i < 4; i=i+2){
+            int16_t lx = level4ladders[i];
+            int16_t ly = level4ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
+        break;
+        case 5:
+          for(int i = 0; i < 4; i=i+2){
+            int16_t lx = level5ladders[i];
+            int16_t ly = level5ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
+        break;
+        case 6:
+          for(int i = 0; i < 4; i=i+2){
+            int16_t lx = level6ladders[i];
+            int16_t ly = level6ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
+        break;
+        case 7:
+          for(int i = 0; i < 4; i=i+2){
+            int16_t lx = level7ladders[i];
+            int16_t ly = level7ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
+        break;
+        case 8:
+          for(int i = 0; i < 4; i=i+2){
+            int16_t lx = level8ladders[i];
+            int16_t ly = level8ladders[i+1];
+            arduboy.drawBitmap(lx,ly,the_ladder,16,21,BLACK);
+          }
         break;
       }
       //add lives
@@ -339,14 +413,7 @@ void handleButtons(){
       case 2:
         if( arduboy.pressed(A_BUTTON) || arduboy.pressed(B_BUTTON) ){
           CURRENT_LEVEL++;          
-          LIVES = MAX_LIVES;
-          SOUND_PLAYED = false;
-          EGG_HIT = false;
-          PICKLE_HIT = false;
-          HOTDOG_HIT = false;
-          burger1status = 0;
-          burger2status = 0;
-          player_y = 44;
+          reset();
           GAME_STATE = 1;
         }
       break;
@@ -354,21 +421,32 @@ void handleButtons(){
       //game over
       case 3:
         if( arduboy.pressed(A_BUTTON) || arduboy.pressed(B_BUTTON) ){
-          CURRENT_LEVEL = 0;
+          CURRENT_LEVEL = 0;          
+          reset();
+          delay(250);
           GAME_STATE = 0;
-          LIVES = MAX_LIVES;
-          SOUND_PLAYED = false;
-          EGG_HIT = false;
-          PICKLE_HIT = false;
-          HOTDOG_HIT = false;
-          burger1status = 0;
-          burger2status = 0;
-          player_y = 44;
         }
       break;
   }
 }
 
+
+
+
+
+void reset(){
+  arduboy.initRandomSeed();
+  LIVES = MAX_LIVES;
+  SOUND_PLAYED = false;
+  EGG_HIT = false;
+  PICKLE_HIT = false;
+  HOTDOG_HIT = false;
+  burger1status = 0;
+  burger2status = 0;
+  player_y = 44;
+  player_x = 4;
+  delay(250);
+}
 
 
 
@@ -465,7 +543,7 @@ bool onLadder(){
   bool ret = false;
   switch( CURRENT_LEVEL ){
     case 1:
-      for(int i=0; i<11; i=i+2){        
+      for(int i=0; i<12; i=i+2){        
         if( (player_x+12) >= (level1ladders[i]+8) && (player_x+8) <= (level1ladders[i]+16) ){
           ret = true;
         }
@@ -474,7 +552,7 @@ bool onLadder(){
     
     case 2:
       for(int i=0; i<7; i=i+2){        
-        if( (player_x+12) >= (level2ladders[i]+8) && (player_x+8) <= (level2ladders[i]+16) && (player_y+16) >= (level2ladders[i+1]-4) && (player_y+16) <= (level2ladders[i+1]+28) ){
+        if( (player_x+12) >= (level2ladders[i]+8) && (player_x+8) <= (level2ladders[i]+16) && (player_y+16) >= (level2ladders[i+1]-4) && (player_y+16) <= (level2ladders[i+1]+24) ){
           ret = true;
         }
       }
@@ -482,7 +560,47 @@ bool onLadder(){
 
     case 3:
       for(int i=0; i<5; i=i+2){        
-        if( (player_x+12) >= (level3ladders[i]+8) && (player_x+8) <= (level3ladders[i]+16) && (player_y+16) >= (level2ladders[i+1]-4) && (player_y+16) <= (level2ladders[i+1]+28) ){
+        if( (player_x+12) >= (level3ladders[i]+8) && (player_x+8) <= (level3ladders[i]+16) && (player_y+16) >= (level3ladders[i+1]-4) && (player_y+16) <= (level3ladders[i+1]+24) ){
+          ret = true;
+        }
+      }
+    break;
+
+    case 4:
+      for(int i=0; i<5; i=i+2){        
+        if( (player_x+12) >= (level4ladders[i]+8) && (player_x+8) <= (level4ladders[i]+16) && (player_y+16) >= (level4ladders[i+1]-4) && (player_y+16) <= (level4ladders[i+1]+24) ){
+          ret = true;
+        }
+      }
+    break;
+
+    case 5:
+      for(int i=0; i<5; i=i+2){        
+        if( (player_x+12) >= (level5ladders[i]+8) && (player_x+8) <= (level5ladders[i]+16) && (player_y+16) >= (level5ladders[i+1]-4) && (player_y+16) <= (level5ladders[i+1]+24) ){
+          ret = true;
+        }
+      }
+    break;
+
+    case 6:
+      for(int i=0; i<5; i=i+2){        
+        if( (player_x+12) >= (level6ladders[i]+8) && (player_x+8) <= (level6ladders[i]+16) && (player_y+16) >= (level6ladders[i+1]-4) && (player_y+16) <= (level6ladders[i+1]+24) ){
+          ret = true;
+        }
+      }
+    break;
+
+    case 7:
+      for(int i=0; i<5; i=i+2){        
+        if( (player_x+12) >= (level7ladders[i]+8) && (player_x+8) <= (level7ladders[i]+16) && (player_y+16) >= (level7ladders[i+1]-4) && (player_y+16) <= (level7ladders[i+1]+24) ){
+          ret = true;
+        }
+      }
+    break;
+
+    case 8:
+      for(int i=0; i<5; i=i+2){        
+        if( (player_x+12) >= (level8ladders[i]+8) && (player_x+8) <= (level8ladders[i]+16) && (player_y+16) >= (level8ladders[i+1]-4) && (player_y+16) <= (level8ladders[i+1]+24) ){
           ret = true;
         }
       }
@@ -528,6 +646,7 @@ void addItems(){
  */
  //egg
 void doEgg(){
+  int minx = 0;
   if(!EGG_HIT){
     switch(CURRENT_LEVEL){
       case 1:
@@ -538,13 +657,30 @@ void doEgg(){
       break;
       case 3:
         egg_y = 38;
+        minx = 12;
+      break;
+      case 4:
+        egg_y = 14;
+      break;
+      case 5:
+        egg_y = -10;
+      break;
+      case 6:
+        egg_y = 38;
+        minx = 12;
+      break;
+      case 7:
+        egg_y = 14;
+      break;
+      case 8:
+        egg_y = -10;
       break;
     }
   }
   if(egg_x == 112 && egg_direction == 1){
     egg_direction = 0;
   }
-  if(egg_x == 0 && egg_direction == 0){
+  if(egg_x == minx && egg_direction == 0){
     egg_direction = 1;
   }  
   if(arduboy.everyXFrames(2)){
@@ -564,6 +700,7 @@ void doEgg(){
 
  //pickle
 void doPickle(){
+  int minx = 0;
   if(!PICKLE_HIT){
     switch(CURRENT_LEVEL){
       case 1:
@@ -571,24 +708,48 @@ void doPickle(){
       break;
       case 2:
         pickle_y = 44;
+        minx = 12;
       break;
       case 3:
         pickle_y = 20;
+      break;
+      case 4:
+        pickle_y = -4;
+      break;
+      case 5:
+        pickle_y = 44;
+        minx = 12;
+      break;
+      case 6:
+        pickle_y = 20;
+      break;
+      case 7:
+        pickle_y = -4;
+      break;
+      case 8:
+        pickle_y = 44;
+        minx = 12;
       break;
     }  
   }
   if(pickle_x == 112 && pickle_direction == 1){
     pickle_direction = 0;
   }
-  if(pickle_x == 0 && pickle_direction == 0){
+  if(pickle_x == minx && pickle_direction == 0){
     pickle_direction = 1;
   }  
   
+  if(arduboy.everyXFrames(3)){
+    if(pickle_direction == 0){
+      pickle_x--;
+    } else if(pickle_direction == 1){
+      pickle_x++;
+    }
+  }
+
   if(pickle_direction == 0){
-    pickle_x--;
     arduboy.drawBitmap( pickle_x,pickle_y,the_pickle_f2,16,16,BLACK);
   } else if(pickle_direction == 1){
-    pickle_x++;
     arduboy.drawBitmap( pickle_x,pickle_y,the_pickle_f1,16,16,BLACK);
   }
   return;
@@ -596,10 +757,12 @@ void doPickle(){
 
 //hotdog
 void doHotdog(){
+  int minx = 0;
   if(!HOTDOG_HIT){
     switch(CURRENT_LEVEL){
       case 1:
         hotdog_y = 44;
+        minx = 12;
       break;
       case 2:
         hotdog_y = 20;
@@ -607,12 +770,29 @@ void doHotdog(){
       case 3:
         hotdog_y = -4;
       break;
+      case 4:
+        hotdog_y = 44;
+        minx = 12;
+      break;
+      case 5:
+        hotdog_y = 20;
+      break;
+      case 6:
+        hotdog_y = -4;
+      break;
+      case 7:
+        hotdog_y = 44;
+        minx = 12;
+      break;
+      case 8:
+        hotdog_y = 20;
+      break;
     }  
   }
   if(hotdog_x == 112 && hotdog_direction == 1){
     hotdog_direction = 0;
   }
-  if(hotdog_x == 0 && hotdog_direction == 0){
+  if(hotdog_x == minx && hotdog_direction == 0){
     hotdog_direction = 1;
   }  
   if(arduboy.everyXFrames(3)){
@@ -645,176 +825,240 @@ void doSalt(){
 void doBurgers(){
   switch(CURRENT_LEVEL){
     case 1:
-      /*
-       * burger 1 
-       */
-      //new
+      TWOBURGERS = true;
       if(burger1status == 0){
         topbun1_x = level1burgers[0];
         topbun1_y = level1burgers[1];
         meat1_x = level1burgers[4];
         meat1_y = level1burgers[5];
+        btmbun1_x = level1burgers[8];
+        btmbun1_y = level1burgers[9];
       }
-      //top falling to platform2
-      if(burger1status == 1){        
-        if(topbun1_y<(platform2_y-3)){
-          topbun1_y++;
-        } else {
-          doGoodSound();
-          if(meat1_y<(platform3_y-5)){
-            meat1_y++;
-          } else {
-            doGoodSound();
-            burger1status = 5;
-          }
-        }
-      }
-      //meat falling to platform3
-      if(burger1status == 2){        
-        if(meat1_y<(platform3_y-5)){
-          meat1_y++;
-        }else{
-          doGoodSound();
-          burger1status = 5;
-        }
-      }
-      //top falling to platform3
-      if(burger1status == 3){        
-        if(topbun1_y<(platform3_y-10)){
-          topbun1_y++;
-        } else {
-          doGoodSound();
-          if(meat1_y<(platform3_y-5)){
-            meat1_y++;
-          } else {
-            doGoodSound();
-            burger1status = 5;
-          }
-        }        
-      }
-      arduboy.drawBitmap( level1burgers[0],topbun1_y,the_top_bun,24,6,BLACK);
-      arduboy.drawBitmap( level1burgers[4],meat1_y,the_meat,24,6,BLACK);
-      arduboy.drawBitmap( level1burgers[8],level1burgers[9],the_bottom_bun,24,6,BLACK);
-
-
-      /*
-       * burger 2
-       */
-      //new
       if(burger2status == 0){
         topbun2_x = level1burgers[2];
         topbun2_y = level1burgers[3];
         meat2_x = level1burgers[6];
         meat2_y = level1burgers[7];
-      }
-      //top falling to platform2
-      if(burger2status == 1){
-        if(topbun2_y<(platform2_y-3)){
-          topbun2_y++;
-        } else {
-          doGoodSound();
-          if(meat2_y<(platform3_y-5)){
-            meat2_y++;
-          } else {
-            doGoodSound();
-            burger2status = 5;
-          }
-        }
-      }
-      //meat falling to platform3
-      if(burger2status == 2){
-        if(meat2_y<(platform3_y-5)){
-          meat2_y++;          
-        }else{
-          doGoodSound();
-          burger2status = 5;
-        }
-      }
-      //top falling to platform3
-      if(burger2status == 3){
-        if(topbun2_y<(platform3_y-10)){
-          topbun2_y++;
-        } else {
-          doGoodSound();
-          if(meat2_y<(platform3_y-5)){
-            meat2_y++;
-          } else {      
-            doGoodSound();   
-            burger2status = 5;
-          }
-        }        
-      }
-      arduboy.drawBitmap( level1burgers[2],topbun2_y,the_top_bun,24,6,BLACK);
-      arduboy.drawBitmap( level1burgers[6],meat2_y,the_meat,24,6,BLACK);
-      arduboy.drawBitmap( level1burgers[10],level1burgers[11],the_bottom_bun,24,6,BLACK);
-
-      //all done?
-      if( topbun1_y == (platform3_y-10) && meat1_y == (platform3_y-5) && topbun2_y == (platform3_y-10) && meat2_y == (platform3_y-5) ){
-        GAME_STATE = 2;
+        btmbun2_x = level1burgers[10];
+        btmbun2_y = level1burgers[11];
       }
     break;
 
-
-
     case 2:
-      /*
-       * burger 1 
-       */
-      //new
+      TWOBURGERS = false;
       if(burger1status == 0){
         topbun1_x = level2burgers[0];
         topbun1_y = level2burgers[1];
         meat1_x = level2burgers[2];
         meat1_y = level2burgers[3];
-      }
-      //top falling to platform2
-      if(burger1status == 1){        
-        if(topbun1_y<(platform2_y-3)){
-          topbun1_y++;
-        } else {
-          doGoodSound();
-          if(meat1_y<(platform3_y-5)){
-            meat1_y++;
-          } else {
-            doGoodSound();
-            burger1status = 5;
-          }
-        }
-      }
-      //meat falling to platform3
-      if(burger1status == 2){        
-        if(meat1_y<(platform3_y-5)){
-          meat1_y++;
-        }else{
-          doGoodSound();
-          burger1status = 5;
-        }
-      }
-      //top falling to platform3
-      if(burger1status == 3){        
-        if(topbun1_y<(platform3_y-10)){
-          topbun1_y++;
-        } else {
-          doGoodSound();
-          if(meat1_y<(platform3_y-5)){
-            meat1_y++;
-          } else {
-            doGoodSound();
-            burger1status = 5;
-          }
-        }        
-      }
-      arduboy.drawBitmap( level2burgers[0],topbun1_y,the_top_bun,24,6,BLACK);
-      arduboy.drawBitmap( level2burgers[2],meat1_y,the_meat,24,6,BLACK);
-      arduboy.drawBitmap( level2burgers[4],level2burgers[5],the_bottom_bun,24,6,BLACK);
-      //all done?
-      if( topbun1_y == (platform3_y-10) && meat1_y == (platform3_y-5) ){
-        GAME_STATE = 2;
-      }
+        btmbun1_x = level2burgers[4];
+        btmbun1_y = level2burgers[5];
+      }      
+    break;
+
+    case 3:
+      TWOBURGERS = true;
+      if(burger1status == 0){
+        topbun1_x = level3burgers[0];
+        topbun1_y = level3burgers[1];
+        meat1_x = level3burgers[4];
+        meat1_y = level3burgers[5];
+        btmbun1_x = level3burgers[8];
+        btmbun1_y = level3burgers[9];
+      }  
+      if(burger2status == 0){
+        topbun2_x = level3burgers[2];
+        topbun2_y = level3burgers[3];
+        meat2_x = level3burgers[6];
+        meat2_y = level3burgers[7];
+        btmbun2_x = level3burgers[10];
+        btmbun2_y = level3burgers[11];
+      }    
+    break;
+
+    case 4:
+      TWOBURGERS = true;
+      if(burger1status == 0){
+        topbun1_x = level4burgers[0];
+        topbun1_y = level4burgers[1];
+        meat1_x = level4burgers[4];
+        meat1_y = level4burgers[5];
+        btmbun1_x = level4burgers[8];
+        btmbun1_y = level4burgers[9];
+      }  
+      if(burger2status == 0){
+        topbun2_x = level4burgers[2];
+        topbun2_y = level4burgers[3];
+        meat2_x = level4burgers[6];
+        meat2_y = level4burgers[7];
+        btmbun2_x = level4burgers[10];
+        btmbun2_y = level4burgers[11];
+      }          
+    break;
+
+    case 5:
+      TWOBURGERS = false;
+      if(burger1status == 0){
+        topbun1_x = level5burgers[0];
+        topbun1_y = level5burgers[1];
+        meat1_x = level5burgers[2];
+        meat1_y = level5burgers[3];
+        btmbun1_x = level5burgers[4];
+        btmbun1_y = level5burgers[5];
+      }      
+    break;
+
+    case 6:
+      TWOBURGERS = false;
+      if(burger1status == 0){
+        topbun1_x = level5burgers[0];
+        topbun1_y = level5burgers[1];
+        meat1_x = level5burgers[2];
+        meat1_y = level5burgers[3];
+        btmbun1_x = level5burgers[4];
+        btmbun1_y = level5burgers[5];
+      }      
+    break;
+
+    case 7:
+      TWOBURGERS = false;
+      if(burger1status == 0){
+        topbun1_x = level7burgers[0];
+        topbun1_y = level7burgers[1];
+        meat1_x = level7burgers[2];
+        meat1_y = level7burgers[3];
+        btmbun1_x = level7burgers[4];
+        btmbun1_y = level7burgers[5];
+      }      
+    break;
+    
+    case 8:
+      TWOBURGERS = true;
+      if(burger1status == 0){
+        topbun1_x = level8burgers[0];
+        topbun1_y = level8burgers[1];
+        meat1_x = level8burgers[4];
+        meat1_y = level8burgers[5];
+        btmbun1_x = level8burgers[8];
+        btmbun1_y = level8burgers[9];
+      }  
+      if(burger2status == 0){
+        topbun2_x = level8burgers[2];
+        topbun2_y = level8burgers[3];
+        meat2_x = level8burgers[6];
+        meat2_y = level8burgers[7];
+        btmbun2_x = level8burgers[10];
+        btmbun2_y = level8burgers[11];
+      }      
     break;
   }
+  
+  //top falling to platform2
+  if(burger1status == 1){        
+    if(topbun1_y<(platform2_y-3)){
+      topbun1_y++;
+    } else {
+      doGoodSound();
+      if(meat1_y<(platform3_y-5)){
+        meat1_y++;
+      } else {
+        doGoodSound();
+        burger1status = 5;
+      }
+    }
+  }
+  //meat falling to platform3
+  if(burger1status == 2){        
+    if(meat1_y<(platform3_y-5)){
+      meat1_y++;
+    }else{
+      doGoodSound();
+      burger1status = 5;
+    }
+  }
+  //top falling to platform3
+  if(burger1status == 3){        
+    if(topbun1_y<(platform3_y-10)){
+      topbun1_y++;
+    } else {
+      doGoodSound();
+      if(meat1_y<(platform3_y-5)){
+        meat1_y++;
+      } else {
+        doGoodSound();
+        burger1status = 5;
+      }
+    }        
+  }
+  arduboy.drawBitmap( topbun1_x,topbun1_y,the_top_bun,24,6,BLACK);
+  arduboy.drawBitmap( meat1_x,meat1_y,the_meat,24,6,BLACK);
+  arduboy.drawBitmap( btmbun1_x,btmbun1_y,the_bottom_bun,24,6,BLACK);
+
+  //add second burger
+  if(TWOBURGERS){
+    //top falling to platform2
+    if(burger2status == 1){
+      if(topbun2_y<(platform2_y-3)){
+        topbun2_y++;
+      } else {
+        doGoodSound();
+        if(meat2_y<(platform3_y-5)){
+          meat2_y++;
+        } else {
+          doGoodSound();
+          burger2status = 5;
+        }
+      }
+    }
+    //meat falling to platform3
+    if(burger2status == 2){
+      if(meat2_y<(platform3_y-5)){
+        meat2_y++;          
+      }else{
+        doGoodSound();
+        burger2status = 5;
+      }
+    }
+    //top falling to platform3
+    if(burger2status == 3){
+      if(topbun2_y<(platform3_y-10)){
+        topbun2_y++;
+      } else {
+        doGoodSound();
+        if(meat2_y<(platform3_y-5)){
+          meat2_y++;
+        } else {      
+          doGoodSound();   
+          burger2status = 5;
+        }
+      }        
+    }
+      
+    arduboy.drawBitmap( topbun2_x,topbun2_y,the_top_bun,24,6,BLACK);
+    arduboy.drawBitmap( meat2_x,meat2_y,the_meat,24,6,BLACK);
+    arduboy.drawBitmap( btmbun2_x,btmbun2_y,the_bottom_bun,24,6,BLACK);
+  }
+
+  
+  //all done?
+  if(TWOBURGERS){
+    if( topbun1_y == (platform3_y-10) && meat1_y == (platform3_y-5) && topbun2_y == (platform3_y-10) && meat2_y == (platform3_y-5) ){
+      GAME_STATE = 2;
+    }
+  } else {
+    if( topbun1_y == (platform3_y-10) && meat1_y == (platform3_y-5) ){
+      GAME_STATE = 2;
+    }
+  } 
+
   return;
 }
+
+
+
+
+
+
 
 
 
@@ -830,92 +1074,76 @@ void handleCollisions(){
   
   if(GAME_STATE == 1){
     //baddies
-    if( (player_x+16) >= egg_x && (player_x+16) <= (egg_x+16) && player_y == (egg_y+6) ){
-      if(arduboy.everyXFrames(10)){
-        dingHealth();
-      }
+    if(collide((player_x+8), (egg_x+8), player_y, egg_y, 8, 8, 6, 8 ) && arduboy.everyXFrames(10) ){
+      dingHealth();
     }
-    if( (player_x+16) >= hotdog_x && (player_x+16) <= (hotdog_x+16) && player_y == hotdog_y){
-      if(arduboy.everyXFrames(10)){
-        dingHealth();
-      }
+    if(collide((player_x+8), (pickle_x+8), player_y, pickle_y, 8, 8, 6, 8 ) && arduboy.everyXFrames(10) ){
+      dingHealth();
     }
-    if( (player_x+16) >= pickle_x && (player_x+16) <= (pickle_x+16) && player_y == pickle_y ){
-      if(arduboy.everyXFrames(10)){
-        dingHealth();
-      }
+    if(collide((player_x+8), (hotdog_x+8), player_y, hotdog_y, 8, 8, 6, 8 ) && arduboy.everyXFrames(10) ){
+      dingHealth();
     }
-
-
-
     
 
-    //burger 1
-    //top bun hits baddie
-    if( burger1status == 1 || burger1status == 3 ){
-      if( topbun1_x <= egg_x && (topbun1_x+24) >= egg_x && topbun1_y >= egg_y ){
-          egg_y = 70;
-          EGG_HIT = true;
+    if(burger1status==1 || burger1status==3){
+      if(collide( (topbun1_x+12), (egg_x+8), topbun1_y, egg_y, 24, 16, 6, 24 )){
+        egg_y = 70;
+        EGG_HIT = true;
       }
-      if( topbun1_x <= pickle_x && (topbun1_x+24) >= pickle_x && topbun1_y >= pickle_y ){
-          pickle_y = 70;
-          PICKLE_HIT = true;
+      if(collide((topbun1_x+12), (pickle_x+8), topbun1_y, pickle_y, 24, 16, 6, 16 )){
+        pickle_y = 70;
+        PICKLE_HIT = true;
       }
-      if( topbun1_x <= hotdog_x && (topbun1_x+24) >= hotdog_x && topbun1_y >= hotdog_y ){
-          hotdog_y = 70;
-          HOTDOG_HIT = true;
+      if(collide((topbun1_x+12), (hotdog_x+8), topbun1_y, hotdog_y, 24, 16, 6, 16 )){
+        hotdog_y = 70;
+        HOTDOG_HIT = true;
       }
     }
-    //meat hits baddies
-    if( burger1status == 2 ){
-      if( meat1_x <= egg_x && (meat1_x+24) >= egg_x && meat1_y >= egg_y ){
-          egg_y = 70;
-          EGG_HIT = true;
+    if(burger1status==2){
+      if(collide((meat1_x+12), (egg_x+8), meat1_y, egg_y, 24, 16, 6, 24 )){
+        egg_y = 70;
+        EGG_HIT = true;
       }
-      if( meat1_x <= pickle_x && (meat1_x+24) >= pickle_x && meat1_y >= pickle_y ){
-          pickle_y = 70;
-          PICKLE_HIT = true;
+      if(collide((meat1_x+12), (pickle_x+8), meat1_y, pickle_y, 24, 16, 6, 16 )){
+        pickle_y = 70;
+        PICKLE_HIT = true;
       }
-      if( meat1_x <= hotdog_x && (meat1_x+24) >= hotdog_x && meat1_y >= hotdog_y ){
-          hotdog_y = 70;
-          HOTDOG_HIT = true;
-      }
-    }
-
-    //burger 2
-    //top bun hits baddie
-    if( burger2status == 1 || burger2status == 3 ){
-      if( topbun2_x <= egg_x && (topbun2_x+24) >= egg_x && topbun2_y >= egg_y ){
-          egg_y = 70;
-          EGG_HIT = true;
-      }
-      if( topbun2_x <= pickle_x && (topbun2_x+24) >= pickle_x && topbun2_y >= pickle_y ){
-          pickle_y = 70;
-          PICKLE_HIT = true;
-      }
-      if( topbun2_x <= hotdog_x && (topbun2_x+24) >= hotdog_x && topbun2_y >= hotdog_y ){
-          hotdog_y = 70;
-          HOTDOG_HIT = true;
-      }
-    }
-    //meat hits baddies
-    if( burger2status == 2 ){
-      if( meat2_x <= egg_x && (meat2_x+24) >= egg_x && meat2_y >= egg_y ){
-          egg_y = 70;
-          EGG_HIT = true;
-      }
-      if( meat2_x <= pickle_x && (meat2_x+24) >= pickle_x && meat2_y >= pickle_y ){
-          pickle_y = 70;
-          PICKLE_HIT = true;
-      }
-      if( meat2_x <= hotdog_x && (meat2_x+24) >= hotdog_x && meat2_y >= hotdog_y ){
-          hotdog_y = 70;
-          HOTDOG_HIT = true;
+      if(collide((meat1_x+12), (hotdog_x+8), meat1_y, hotdog_y, 24, 16, 6, 16 )){
+        hotdog_y = 70;
+        HOTDOG_HIT = true;
       }
     }
 
 
-
+    if(burger2status==1 || burger2status==3){
+      if(collide((topbun2_x+12), (egg_x+8), topbun2_y, egg_y, 24, 16, 6, 24 )){
+        egg_y = 70;
+        EGG_HIT = true;
+      }
+      if(collide((topbun2_x+12), (pickle_x+8), topbun2_y, pickle_y, 24, 16, 6, 16 )){
+        pickle_y = 70;
+        PICKLE_HIT = true;
+      }
+      if(collide((topbun2_x+12), (hotdog_x+8), topbun2_y, hotdog_y, 24, 16, 6, 16 )){
+        hotdog_y = 70;
+        HOTDOG_HIT = true;
+      }
+    }
+    if(burger2status==2){
+      if(collide((meat2_x+12), (egg_x+8), meat2_y, egg_y, 24, 16, 6, 24 )){
+        egg_y = 70;
+        EGG_HIT = true;
+      }
+      if(collide((meat2_x+12), (pickle_x+8), meat2_y, pickle_y, 24, 16, 6, 16 )){
+        pickle_y = 70;
+        PICKLE_HIT = true;
+      }
+      if(collide((meat2_x+12), (hotdog_x+8), meat2_y, hotdog_y, 24, 16, 6, 16 )){
+        hotdog_y = 70;
+        HOTDOG_HIT = true;
+      }
+    }
+    
 
     
     
@@ -964,6 +1192,11 @@ void handleCollisions(){
 
 
 
+bool collide(int x1, int x2, int y1, int y2, int w1, int w2, int h1, int h2){
+  return !( x2 >= (x1+w1) || (x2+w2) <= x1 || y2 >= (y1+h2) || (y2+h2) <= y1);
+}
+
+
 
 
 
@@ -983,7 +1216,7 @@ void dingHealth(){
       if(SOUND_ENABLED){
         soundEgg();
       }      
-      player_x = 8;
+      player_x = 4;
       player_y = 44;
     }
     PLAYER_HIT = false;
@@ -1012,6 +1245,7 @@ void doGoodSound(){
     soundGood();
   }
 }
+
 void trace(String the_string){
   arduboy.setCursor(0,56);
   arduboy.print(the_string);
